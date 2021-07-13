@@ -1,5 +1,7 @@
 package com.example
 
+import com.example.model.AdditionRequest
+import com.example.service.AdditionService
 import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.request.*
@@ -16,6 +18,9 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+
+    val additionService = AdditionService()
+
     install(ContentNegotiation) {
         jackson {
             enable(SerializationFeature.INDENT_OUTPUT)
@@ -23,16 +28,6 @@ fun Application.module(testing: Boolean = false) {
     }
 
     install(Locations) {
-    }
-
-    install(Compression) {
-        gzip {
-            priority = 1.0
-        }
-        deflate {
-            priority = 10.0
-            minimumSize(1024) // condition
-        }
     }
 
     install(CallLogging) {
@@ -58,6 +53,13 @@ fun Application.module(testing: Boolean = false) {
         }
         get<Type.List> {
             call.respondText("Inside $it")
+        }
+        get("/health") {
+            call.respondText("<h2>Application is Up!</h2><br><br>Ktor is functioning properly!")
+        }
+        post<AdditionService> {
+            val additionRequestBody = call.receive<AdditionRequest>()
+            call.respond(mapOf("AdditionResult" to additionService.addition(additionRequestBody)))
         }
     }
 }
